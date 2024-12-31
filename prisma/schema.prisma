@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model IncomeRecord {
+  id        Int      @id @default(autoincrement())
+  date      DateTime
+  amount    Float
+  notes     String?
+  createdAt DateTime @default(now())
+}
+
+model ExpenseRecord {
+  id        Int      @id @default(autoincrement())
+  date      DateTime
+  amount    Float
+  category  String
+  notes     String?
+  createdAt DateTime @default(now())
+}
+
+model Report {
+  id            Int      @id @default(autoincrement())
+  startDate     DateTime
+  endDate       DateTime
+  totalIncome   Float
+  totalExpenses Float
+  netProfit     Float
+  createdAt     DateTime @default(now())
+}
+
+model UtilityBill {
+  id             Int               @id @default(autoincrement())
+  startDate      DateTime          @default(now())
+  initialUnits   Float
+  remainingUnits Float
+  totalCostMWK   Float
+  isActive       Boolean           @default(true)
+  usageRecords   ElectricityUsage[]
+}
+
+model ElectricityUsage {
+  id        Int         @id @default(autoincrement())
+  date      DateTime    @default(now())
+  unitsUsed Float
+  costMWK   Float
+  notes     String?
+  billId    Int
+  bill      UtilityBill @relation(fields: [billId], references: [id])
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  username String @unique
+  role     String @default("user")
+}
+
+
+
+
