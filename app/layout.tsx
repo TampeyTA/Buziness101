@@ -48,7 +48,10 @@ export default function RootLayout({
             <div className= "absolute flex flex-row right-2 top-2 gap-4">
               <ThemeSwitch />
               <LogoutButton />
+            
             </div>
+
+            
             
             <main className="container mx-auto max-w-7xl pt-16 px-6 flex-grow">
               {children}

@@ -70,7 +70,7 @@ export default function Home() {
               </p>
               <Button 
                 as={Link} 
-                href="/ElectricityUsage"
+                href="/UtilityData"
                 color="primary" 
                 size="lg"
                 className="mt-4 font-semibold text-lg"

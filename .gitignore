@@ -43,3 +43,5 @@ prisma/.env
 !prisma/dev.db
 
 
+
+.vercel

@@ -13,7 +13,6 @@ import NextLink from "next/link";
 import clsx from "clsx";
 
 import { siteConfig } from "@/config/site";
-import { ThemeSwitch } from "@/components/theme-switch";
 
 export const Navbar = () => {
   return (
@@ -22,8 +21,13 @@ export const Navbar = () => {
       position="sticky"
       className="py-2"
     >
+      {/* Add MenuToggle for mobile */}
+      <NavbarContent className="sm:hidden" justify="start">
+        <NavbarMenuToggle />
+      </NavbarContent>
+
       <NavbarContent className="basis-1/6 sm:basis-full" justify="start">
-        <ul className="hidden lg:flex justify-between w-full ml-8">
+        <ul className="hidden lg:flex md:flex justify-between w-full ml-8">
           {siteConfig.navItems.map((item) => (
             <NavbarItem key={item.href}>
               <NextLink
@@ -43,19 +47,19 @@ export const Navbar = () => {
         </ul>
       </NavbarContent>
 
-  <NavbarMenu>
+      <NavbarMenu>
         <div className="mx-4 mt-4 flex flex-col gap-4">
           {siteConfig.navMenuItems.map((item, index) => (
             <NavbarMenuItem key={`${item}-${index}`}>
               <Link
                 color={
                   index === 2
-                    ? "primary"
+                    ? "foreground"
                     : index === siteConfig.navMenuItems.length - 1
-                      ? "danger"
+                      ? "foreground"
                       : "foreground"
                 }
-                href="#"
+                href={item.href}  // Added the href from the config
                 size="lg"
                 className="text-2xl font-semibold hover:opacity-80 transition-opacity"
               >
