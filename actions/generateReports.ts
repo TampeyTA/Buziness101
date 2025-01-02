@@ -48,23 +48,28 @@ export async function generatePDFReport(period: 'week' | 'month' | '6months' | '
     const endDate = new Date()
     let startDate: Date
     let reportTitle: string
+    let dateString: string
 
     switch (period) {
       case 'week':
         startDate = subDays(endDate, 7)
         reportTitle = 'Weekly Report (Last 7 Days)'
+        dateString = `Weekly_${startDate.toISOString().split('T')[0]}_to_${endDate.toISOString().split('T')[0]}`
         break
       case 'month':
         startDate = subWeeks(endDate, 4)
         reportTitle = 'Monthly Report (Last 4 Weeks)'
+        dateString = `Monthly_${startDate.toISOString().split('T')[0]}_to_${endDate.toISOString().split('T')[0]}`
         break
       case '6months':
         startDate = subMonths(endDate, 6)
         reportTitle = '6-Month Report'
+        dateString = `6Month_${startDate.toISOString().split('T')[0]}_to_${endDate.toISOString().split('T')[0]}`
         break
       case 'year':
         startDate = subYears(endDate, 1)
         reportTitle = 'Yearly Report'
+        dateString = `Yearly_${startDate.toISOString().split('T')[0]}_to_${endDate.toISOString().split('T')[0]}`
         break
     }
 
@@ -157,8 +162,6 @@ export async function generatePDFReport(period: 'week' | 'month' | '6months' | '
     yPos += LINE_HEIGHT
     doc.text(`Total Units Consumed: KWH ${totalElectricityUsage.toFixed(2)}`, 10, yPos)
     yPos += LINE_HEIGHT * 2
-
-    
 
     // Income Records
     if (incomeRecords.length > 0) {
@@ -317,7 +320,10 @@ export async function generatePDFReport(period: 'week' | 'month' | '6months' | '
       throw new Error('Generated PDF is empty')
     }
     
-    return output
+    return {
+      buffer: output,
+      dateString
+    }
   } catch (error) {
     console.error('Error in generatePDFReport:', error)
     throw error
@@ -326,6 +332,7 @@ export async function generatePDFReport(period: 'week' | 'month' | '6months' | '
 
 export async function generateBlankPDF() {
   const doc = new jsPDF()
+  const currentDate = new Date().toISOString().split('T')[0]
   
   // Title
   doc.setFontSize(18)
@@ -363,6 +370,8 @@ export async function generateBlankPDF() {
     )
   }
 
-  return doc.output('arraybuffer')
+  return {
+    buffer: doc.output('arraybuffer'),
+    dateString: `Blank_Entry_Form_${currentDate}`
+  }
 }
-

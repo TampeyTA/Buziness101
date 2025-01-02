@@ -10,8 +10,8 @@ export default function ReportGenerator() {
   const handleGenerateReport = async (period: 'week' | 'month' | '6months' | 'year') => {
     setIsGenerating(true)
     try {
-      const pdfBuffer = await generatePDFReport(period)
-      downloadPDF(pdfBuffer, `${period}_report.pdf`)
+      const result = await generatePDFReport(period)
+      downloadPDF(result.buffer, `${result.dateString}.pdf`)
     } catch (error) {
       console.error('Error generating report:', error)
       alert('An error occurred while generating the report.')
@@ -23,8 +23,8 @@ export default function ReportGenerator() {
   const handleGenerateBlankPDF = async () => {
     setIsGenerating(true)
     try {
-      const pdfBuffer = await generateBlankPDF()
-      downloadPDF(pdfBuffer, 'blank_entry_form.pdf')
+      const result = await generateBlankPDF()
+      downloadPDF(result.buffer, `${result.dateString}.pdf`)
     } catch (error) {
       console.error('Error generating blank PDF:', error)
       alert('An error occurred while generating the blank PDF.')
@@ -48,52 +48,51 @@ export default function ReportGenerator() {
       </CardHeader>
       <Divider />
       <CardBody className="p-6">
-  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-    <Button
-      color="primary"
-      onClick={() => handleGenerateReport('week')}
-      disabled={isGenerating}
-      className="h-16 text-lg font-semibold shadow-lg hover:opacity-90"
-    >
-      Generate Weekly Report
-    </Button>
-    <Button
-      color="primary"
-      onClick={() => handleGenerateReport('month')}
-      disabled={isGenerating}
-      className="h-16 text-lg font-semibold shadow-lg hover:opacity-90"
-    >
-      Generate Monthly Report
-    </Button>
-    <Button
-      color="primary"
-      onClick={() => handleGenerateReport('6months')}
-      disabled={isGenerating}
-      className="h-16 text-lg font-semibold shadow-lg hover:opacity-90"
-    >
-      Generate 6-Month Report
-    </Button>
-    <Button
-      color="primary"
-      onClick={() => handleGenerateReport('year')}
-      disabled={isGenerating}
-      className="h-16 text-lg font-semibold shadow-lg hover:opacity-90"
-    >
-      Generate Yearly Report
-    </Button>
-  </div>
-  <div className="mt-6">
-    <Button
-      color="secondary"
-      onClick={handleGenerateBlankPDF}
-      disabled={isGenerating}
-      className="w-full h-16 text-lg font-semibold shadow-lg hover:opacity-90"
-    >
-      Generate Blank Entry Form
-    </Button>
-  </div>
-  </CardBody>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <Button
+            color="primary"
+            onClick={() => handleGenerateReport('week')}
+            disabled={isGenerating}
+            className="h-16 text-lg font-semibold shadow-lg hover:opacity-90"
+          >
+            Generate Weekly Report
+          </Button>
+          <Button
+            color="primary"
+            onClick={() => handleGenerateReport('month')}
+            disabled={isGenerating}
+            className="h-16 text-lg font-semibold shadow-lg hover:opacity-90"
+          >
+            Generate Monthly Report
+          </Button>
+          <Button
+            color="primary"
+            onClick={() => handleGenerateReport('6months')}
+            disabled={isGenerating}
+            className="h-16 text-lg font-semibold shadow-lg hover:opacity-90"
+          >
+            Generate 6-Month Report
+          </Button>
+          <Button
+            color="primary"
+            onClick={() => handleGenerateReport('year')}
+            disabled={isGenerating}
+            className="h-16 text-lg font-semibold shadow-lg hover:opacity-90"
+          >
+            Generate Yearly Report
+          </Button>
+        </div>
+        <div className="mt-6">
+          <Button
+            color="secondary"
+            onClick={handleGenerateBlankPDF}
+            disabled={isGenerating}
+            className="w-full h-16 text-lg font-semibold shadow-lg hover:opacity-90"
+          >
+            Generate Blank Entry Form
+          </Button>
+        </div>
+      </CardBody>
     </Card>
   )
 }
-
