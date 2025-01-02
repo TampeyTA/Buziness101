@@ -11,6 +11,8 @@ import { Link } from "@nextui-org/link";
 import { link as linkStyles } from "@nextui-org/theme";
 import NextLink from "next/link";
 import clsx from "clsx";
+import { ThemeSwitch } from "@/components/theme-switch";
+import LogoutButton from  "@/components/LogoutButton";
 
 import { siteConfig } from "@/config/site";
 
@@ -44,6 +46,8 @@ export const Navbar = () => {
               </NextLink>
             </NavbarItem>
           ))}
+           <ThemeSwitch />
+           <LogoutButton />
         </ul>
       </NavbarContent>
 
@@ -65,8 +69,10 @@ export const Navbar = () => {
               >
                 {item.label}
               </Link>
-            </NavbarMenuItem>
+             </NavbarMenuItem>
           ))}
+            <ThemeSwitch />
+            <LogoutButton />
         </div>
       </NavbarMenu>
     </NextUINavbar>

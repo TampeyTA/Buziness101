@@ -1,12 +1,47 @@
 'use server'
-import { prisma } from '@/lib/prisma';
-import { subDays, subWeeks, subMonths, subYears, startOfDay, endOfDay } from 'date-fns';
-import {  } from '@/types';
+import { prisma } from '@/lib/prisma'
+import { subDays, subWeeks, subMonths, subYears, startOfDay, endOfDay } from 'date-fns'
 import jsPDF from 'jspdf'
+import 'jspdf-autotable'
+
+// Define the types for jspdf-autotable
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: AutoTableOptions) => jsPDF;
+    lastAutoTable: {
+      finalY: number;
+    };
+  }
+}
+
+interface AutoTableOptions {
+  startY?: number;
+  head?: string[][];
+  body: string[][];
+  theme?: string;
+  headStyles?: {
+    fillColor?: number[];
+    textColor?: number;
+    fontSize?: number;
+    halign?: string;
+  };
+  styles?: {
+    fontSize?: number;
+    cellPadding?: number;
+    halign?: string;
+  };
+  columnStyles?: {
+    [key: number]: {
+      halign?: string;
+      fontStyle?: string;
+    };
+  };
+}
 
 const PAGE_HEIGHT = 280
 const LINE_HEIGHT = 10
 const MARGIN_TOP = 20
+const PAGE_WIDTH = 210
 
 export async function generatePDFReport(period: 'week' | 'month' | '6months' | 'year') {
   try {
@@ -100,14 +135,16 @@ export async function generatePDFReport(period: 'week' | 'month' | '6months' | '
       return false
     }
 
+    // Title
     doc.setFontSize(18)
-    doc.text(reportTitle, 105, yPos, { align: 'center' })
+    doc.text(reportTitle, PAGE_WIDTH / 2, yPos, { align: 'center' })
     yPos += LINE_HEIGHT * 2
 
-    const totalIncome = incomeRecords.reduce((sum: any, record: any) => sum + record.amount, 0)
-    const totalExpenses = expenseRecords.reduce((sum: any, record: any) => sum + record.amount, 0)
-    const totalUtilityBill = utilityBill.reduce((sum: any, record: any) => sum + record.initialUnits, 0)
-    const totalElectricityUsage = electricityUsage.reduce((sum: any, record: any) => sum + record.unitsUsed, 0)
+    // Summary Section
+    const totalIncome = incomeRecords.reduce((sum, record) => sum + record.amount, 0)
+    const totalExpenses = expenseRecords.reduce((sum, record) => sum + record.amount, 0)
+    const totalUtilityBill = utilityBill.reduce((sum, record) => sum + record.initialUnits, 0)
+    const totalElectricityUsage = electricityUsage.reduce((sum, record) => sum + record.unitsUsed, 0)
     
     doc.setFontSize(14)
     doc.text(`Total Income: MWK ${totalIncome.toFixed(2)}`, 10, yPos)
@@ -121,87 +158,155 @@ export async function generatePDFReport(period: 'week' | 'month' | '6months' | '
     doc.text(`Total Units Consumed: KWH ${totalElectricityUsage.toFixed(2)}`, 10, yPos)
     yPos += LINE_HEIGHT * 2
 
+    
+
+    // Income Records
     if (incomeRecords.length > 0) {
       checkNewPage(LINE_HEIGHT * 2)
+      doc.setFontSize(14)
       doc.text('Income Records:', 10, yPos)
       yPos += LINE_HEIGHT
 
-      doc.setFontSize(12)
-      incomeRecords.forEach((record: any) => {
-        checkNewPage()
-        doc.text(
-          `Date: ${record.date.toISOString().split('T')[0]}, Amount: MWK ${record.amount.toFixed(2)}`,
-          10,
-          yPos
-        )
-        yPos += LINE_HEIGHT
+      doc.autoTable({
+        startY: yPos,
+        head: [['Date', 'Amount (MWK)']],
+        body: incomeRecords.map(record => [
+          record.date.toISOString().split('T')[0],
+          record.amount.toFixed(2)
+        ]),
+        theme: 'striped',
+        headStyles: {
+          fillColor: [52, 73, 94],
+          textColor: 255,
+          fontSize: 12,
+          halign: 'center',
+        },
+        styles: {
+          fontSize: 10,
+          cellPadding: 4,
+        },
+        columnStyles: {
+          1: { halign: 'center' },
+        },
       })
+
+      yPos = (doc as any).lastAutoTable.finalY + LINE_HEIGHT
     }
 
+    // Expense Records
     if (expenseRecords.length > 0) {
-      yPos += LINE_HEIGHT
       checkNewPage(LINE_HEIGHT * 2)
       doc.setFontSize(14)
       doc.text('Expense Records:', 10, yPos)
       yPos += LINE_HEIGHT
 
-      doc.setFontSize(12)
-      expenseRecords.forEach((record: any) => {
-        checkNewPage()
-        doc.text(
-          `Date: ${record.date.toISOString().split('T')[0]}, Amount: MWK ${record.amount.toFixed(2)}, Category: ${record.category}`,
-          10,
-          yPos
-        )
-        yPos += LINE_HEIGHT
+      doc.autoTable({
+        startY: yPos,
+        head: [['Date', 'Amount (MWK)', 'Category']],
+        body: expenseRecords.map(record => [
+          record.date.toISOString().split('T')[0],
+          record.amount.toFixed(2),
+          record.category
+        ]),
+        theme: 'striped',
+        headStyles: {
+          fillColor: [52, 73, 94],
+          textColor: 255,
+          fontSize: 12,
+          halign: 'center',
+        },
+        styles: {
+          fontSize: 10,
+          cellPadding: 4,
+        },
+        columnStyles: {
+          1: { halign: 'center' },
+        },
       })
+
+      yPos = (doc as any).lastAutoTable.finalY + LINE_HEIGHT
     }
 
+    // Utility Bills Records
     if (utilityBill.length > 0) {
-      yPos += LINE_HEIGHT
       checkNewPage(LINE_HEIGHT * 2)
       doc.setFontSize(14)
       doc.text('Utility Bills Records:', 10, yPos)
       yPos += LINE_HEIGHT
 
-      doc.setFontSize(12)
-      utilityBill.forEach((record: any) => {
-        checkNewPage()
-        doc.text(
-          `Date: ${record.startDate.toISOString().split('T')[0]}, Total Cost: MWK ${record.totalCostMWK}, Initial Units: KWH ${record.initialUnits.toFixed(2)}, Used: KWH ${(record.initialUnits - record.remainingUnits).toFixed(2)}`,
-          10,
-          yPos
-        )
-        yPos += LINE_HEIGHT
+      doc.autoTable({
+        startY: yPos,
+        head: [['Date', 'Total Cost (MWK)', 'Initial Units (KWH)', 'Used Units (KWH)']],
+        body: utilityBill.map(record => [
+          record.startDate.toISOString().split('T')[0],
+          record.totalCostMWK.toFixed(2),
+          record.initialUnits.toFixed(2),
+          (record.initialUnits - record.remainingUnits).toFixed(2)
+        ]),
+        theme: 'striped',
+        headStyles: {
+          fillColor: [52, 73, 94],
+          textColor: 255,
+          fontSize: 12,
+          halign: 'center',
+        },
+        styles: {
+          fontSize: 10,
+          cellPadding: 4,
+        },
+        columnStyles: {
+          1: { halign: 'center' },
+          2: { halign: 'center' },
+          3: { halign: 'center' },
+        },
       })
+
+      yPos = (doc as any).lastAutoTable.finalY + LINE_HEIGHT
     }
 
+    // Electricity Usage Records
     if (electricityUsage.length > 0) {
-      yPos += LINE_HEIGHT
       checkNewPage(LINE_HEIGHT * 2)
       doc.setFontSize(14)
       doc.text('Electricity Usage Records:', 10, yPos)
       yPos += LINE_HEIGHT
 
-      doc.setFontSize(12)
-      electricityUsage.forEach((record: any) => {
-        checkNewPage()
-        doc.text(
-          `Date: ${record.date.toISOString().split('T')[0]}, Units Used: KWH ${record.unitsUsed.toFixed(2)}, Cost: MWK ${record.costMWK.toFixed(2)}`,
-          10,
-          yPos
-        )
-        yPos += LINE_HEIGHT
+      doc.autoTable({
+        startY: yPos,
+        head: [['Date', 'Units Used (KWH)', 'Cost (MWK)']],
+        body: electricityUsage.map(record => [
+          record.date.toISOString().split('T')[0],
+          record.unitsUsed.toFixed(2),
+          record.costMWK.toFixed(2)
+        ]),
+        theme: 'striped',
+        headStyles: {
+          fillColor: [52, 73, 94],
+          textColor: 255,
+          fontSize: 12,
+          halign: 'center',
+        },
+        styles: {
+          fontSize: 10,
+          cellPadding: 4,
+        },
+        columnStyles: {
+          1: { halign: 'center' },
+          2: { halign: 'center' },
+        },
       })
+
+      yPos = (doc as any).lastAutoTable.finalY + LINE_HEIGHT
     }
 
-    const pageCount = (doc as any).internal.pages.length - 1
+    // Add page numbers
+    const pageCount = (doc as any).internal.pages.length
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i)
       doc.setFontSize(10)
       doc.text(
         `Page ${i} of ${pageCount}`,
-        105,
+        PAGE_WIDTH / 2,
         290,
         { align: 'center' }
       )
@@ -221,41 +326,38 @@ export async function generatePDFReport(period: 'week' | 'month' | '6months' | '
 
 export async function generateBlankPDF() {
   const doc = new jsPDF()
-  let yPos = MARGIN_TOP
-
-  const checkNewPage = (requiredSpace: number = LINE_HEIGHT) => {
-    if (yPos + requiredSpace > PAGE_HEIGHT) {
-      doc.addPage()
-      yPos = MARGIN_TOP
-      return true
-    }
-    return false
-  }
-
+  
+  // Title
   doc.setFontSize(18)
-  doc.text('Maize Milling Business - Manual Entry Form', 105, yPos, { align: 'center' })
-  yPos += LINE_HEIGHT * 2
+  doc.text('Maize Milling Business - Manual Entry Form', PAGE_WIDTH / 2, MARGIN_TOP, { align: 'center' })
 
-  for (let i = 0; i < 20; i++) {
-    checkNewPage()
-    doc.setFontSize(12)
-    doc.text(
-      `Date: ____________ Income: ____________ Expense: ____________ Category: ____________
-      Units: ______________
-      `,
-      10,
-      yPos
-    )
-    yPos += LINE_HEIGHT
-  }
+  // Create form table
+  doc.autoTable({
+    startY: MARGIN_TOP + 20,
+    head: [['Date', 'Income (MWK)', 'Expense (MWK)', 'Category', 'Units (KWH)']],
+    body: Array(20).fill(['____________', '____________', '____________', '____________', '____________']),
+    theme: 'grid',
+    headStyles: {
+      fillColor: [52, 73, 94],
+      textColor: 255,
+      fontSize: 12,
+      halign: 'center',
+    },
+    styles: {
+      fontSize: 10,
+      cellPadding: 8,
+      halign: 'center',
+    },
+  })
 
-  const pageCount = (doc as any).internal.pages.length - 1
+  // Add page numbers
+  const pageCount = (doc as any).internal.pages.length
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i)
     doc.setFontSize(10)
     doc.text(
       `Page ${i} of ${pageCount}`,
-      105,
+      PAGE_WIDTH / 2,
       290,
       { align: 'center' }
     )
@@ -263,3 +365,4 @@ export async function generateBlankPDF() {
 
   return doc.output('arraybuffer')
 }
+
